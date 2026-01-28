@@ -1,0 +1,1334 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>家长端 - 学习监督系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #4a6bdf;
+            --secondary-color: #6c757d;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --light-bg: #f5f7fb;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background-color: var(--light-bg);
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+        
+        /* 骨架屏动画 */
+        @keyframes shimmer {
+            0% { background-position: -1000px 0; }
+            100% { background-position: 1000px 0; }
+        }
+        
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 1000px 100%;
+            animation: shimmer 2s infinite linear;
+            border-radius: 8px;
+        }
+        
+        .skeleton-circle {
+            border-radius: 50%;
+        }
+        
+        /* 页面加载动画 */
+        .page-loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.3s ease;
+        }
+        
+        .page-loading .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* 侧边栏优化 */
+        .sidebar {
+            background: linear-gradient(180deg, #4a6bdf 0%, #3a56c9 100%);
+            color: white;
+            min-height: 100vh;
+            position: fixed;
+            width: 250px;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            z-index: 100;
+            transform: translateX(0);
+            transition: transform 0.3s ease;
+        }
+        
+        .sidebar.collapsed {
+            transform: translateX(-250px);
+        }
+        
+        .sidebar-toggle {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            z-index: 101;
+            display: none;
+        }
+        
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+            transition: margin-left 0.3s ease;
+        }
+        
+        .main-content.expanded {
+            margin-left: 0;
+        }
+        
+        .logo {
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .nav-link {
+            color: rgba(255,255,255,0.8);
+            padding: 12px 20px;
+            margin: 5px 10px;
+            border-radius: 8px;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+        }
+        
+        .nav-link:hover, .nav-link.active {
+            background-color: rgba(255,255,255,0.1);
+            color: white;
+        }
+        
+        .nav-link i {
+            width: 20px;
+            margin-right: 10px;
+            text-align: center;
+        }
+        
+        /* 卡片优化 */
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid transparent;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            border-color: rgba(74, 107, 223, 0.1);
+        }
+        
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+        
+        /* 孩子卡片优化 */
+        .child-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border-left: 4px solid var(--primary-color);
+            transition: all 0.3s ease;
+            height: 100%;
+        }
+        
+        .child-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+        
+        .progress-circle {
+            width: 80px;
+            height: 80px;
+            position: relative;
+        }
+        
+        /* 日历优化 */
+        .calendar-container {
+            overflow-x: auto;
+            padding-bottom: 10px;
+        }
+        
+        .calendar-days {
+            display: flex;
+            gap: 4px;
+            min-width: 600px;
+        }
+        
+        .calendar-day {
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 2px;
+            border-radius: 50%;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        
+        .calendar-day:hover {
+            transform: scale(1.1);
+        }
+        
+        .calendar-day.learned {
+            background: linear-gradient(135deg, #4cd964 0%, #2ecc71 100%);
+            color: white;
+        }
+        
+        .calendar-day.partial {
+            background: linear-gradient(135deg, #ffd166 0%, #ffb347 100%);
+            color: white;
+        }
+        
+        .calendar-day.missed {
+            background-color: #f8f9fa;
+            color: #6c757d;
+            border: 1px solid #e9ecef;
+        }
+        
+        /* 头像优化 */
+        .child-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #4a6bdf, #3a56c9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 32px;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(74, 107, 223, 0.3);
+        }
+        
+        /* 表格优化 */
+        .table-responsive {
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .table {
+            margin-bottom: 0;
+        }
+        
+        .table thead th {
+            background: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+            font-weight: 600;
+            color: #495057;
+            padding: 15px;
+        }
+        
+        .table tbody td {
+            padding: 15px;
+            vertical-align: middle;
+            border-color: #f1f3f5;
+        }
+        
+        .table tbody tr {
+            transition: all 0.2s ease;
+        }
+        
+        .table tbody tr:hover {
+            background-color: rgba(74, 107, 223, 0.05);
+        }
+        
+        /* 按钮优化 */
+        .btn {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-weight: 500;
+        }
+        
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        /* 响应式设计优化 */
+        @media (max-width: 992px) {
+            .sidebar {
+                transform: translateX(-250px);
+            }
+            
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            
+            .sidebar-toggle {
+                display: block;
+            }
+            
+            .main-content {
+                margin-left: 0;
+                padding: 15px;
+            }
+            
+            .stat-card, .child-card {
+                padding: 15px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                padding: 10px;
+            }
+            
+            .calendar-days {
+                min-width: 100%;
+            }
+            
+            .calendar-day {
+                width: 25px;
+                height: 25px;
+                font-size: 12px;
+            }
+        }
+        
+        /* 顶部栏优化 */
+        .top-bar {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        /* Toast提示优化 */
+        .custom-toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1050;
+            min-width: 300px;
+            animation: slideInRight 0.3s ease;
+        }
+        
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        /* 数据卡片动画 */
+        .fade-in {
+            animation: fadeInUp 0.5s ease forwards;
+            opacity: 0;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* 进度条优化 */
+        .progress {
+            height: 8px;
+            border-radius: 4px;
+            background-color: #e9ecef;
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            background: linear-gradient(90deg, #4a6bdf, #667eea);
+            transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        /* 徽章优化 */
+        .badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+        
+        /* 分割线优化 */
+        hr {
+            opacity: 0.1;
+            margin: 1rem 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- 页面加载遮罩 -->
+    <div class="page-loading" id="pageLoading">
+        <div class="spinner"></div>
+        <p class="text-white mt-3">正在加载家长端...</p>
+    </div>
+
+    <!-- 侧边栏切换按钮（移动端） -->
+    <button class="btn btn-primary sidebar-toggle" id="sidebarToggle">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- 侧边栏 -->
+    <div class="sidebar" id="sidebar">
+        <div class="logo">
+            <h3><i class="fas fa-user-shield"></i> 家长监督</h3>
+        </div>
+        
+        <nav class="nav flex-column mt-4">
+            <a class="nav-link active" href="parent.html">
+                <i class="fas fa-home"></i>
+                <span class="nav-text">首页概览</span>
+            </a>
+            <a class="nav-link" href="#calendar">
+                <i class="fas fa-calendar-alt"></i>
+                <span class="nav-text">学习日历</span>
+            </a>
+            <a class="nav-link" href="#reports">
+                <i class="fas fa-chart-line"></i>
+                <span class="nav-text">学习报告</span>
+            </a>
+            <a class="nav-link" href="#children">
+                <i class="fas fa-child"></i>
+                <span class="nav-text">孩子管理</span>
+            </a>
+            <a class="nav-link" href="#settings">
+                <i class="fas fa-cog"></i>
+                <span class="nav-text">账户设置</span>
+            </a>
+        </nav>
+        
+        <div class="position-absolute bottom-0 start-0 w-100 p-3">
+            <div class="d-flex align-items-center">
+                <div class="rounded-circle bg-white text-primary d-flex align-items-center justify-content-center" 
+                     style="width: 40px; height: 40px;">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div class="ms-3">
+                    <div class="text-white fw-bold" id="parentName">加载中...</div>
+                    <small class="text-white-50">家长账号</small>
+                </div>
+            </div>
+            <button class="btn btn-outline-light w-100 mt-3" onclick="logout()">
+                <i class="fas fa-sign-out-alt me-2"></i>
+                <span class="nav-text">退出登录</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- 主内容区 -->
+    <div class="main-content" id="mainContent">
+        <!-- 顶部栏 -->
+        <div class="top-bar">
+            <div>
+                <h2 class="mb-0">家长监督面板</h2>
+                <p class="text-muted mb-0" id="currentDate">...</p>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <div class="me-2">
+                    <span class="badge bg-success">
+                        <i class="fas fa-circle me-1" style="font-size: 8px;"></i>
+                        已连接
+                    </span>
+                </div>
+                <button class="btn btn-primary" id="refreshBtn" onclick="refreshData()">
+                    <i class="fas fa-sync-alt me-2"></i>刷新数据
+                </button>
+            </div>
+        </div>
+
+        <!-- 统计概览 - 骨架屏 -->
+        <div class="row mb-4" id="statsContainer">
+            <!-- 统计卡片将通过JS动态生成 -->
+        </div>
+
+        <!-- 孩子列表 - 骨架屏 -->
+        <div class="mb-4" id="childrenContainer">
+            <h4 class="mb-3">我的孩子</h4>
+            <div id="childrenList" class="row">
+                <!-- 骨架屏 -->
+                <div class="col-md-6 col-lg-4 mb-3">
+                    <div class="child-card">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="child-avatar me-3 skeleton skeleton-circle" style="width: 80px; height: 80px;"></div>
+                            <div style="flex: 1;">
+                                <div class="skeleton mb-2" style="height: 20px; width: 80%;"></div>
+                                <div class="skeleton" style="height: 15px; width: 60%;"></div>
+                            </div>
+                        </div>
+                        <div class="skeleton mb-3" style="height: 8px; width: 100%;"></div>
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <div class="skeleton mb-1" style="height: 30px; width: 50px; margin: 0 auto;"></div>
+                                <div class="skeleton" style="height: 15px; width: 70%; margin: 0 auto;"></div>
+                            </div>
+                            <div class="col-6">
+                                <div class="skeleton mb-1" style="height: 30px; width: 50px; margin: 0 auto;"></div>
+                                <div class="skeleton" style="height: 15px; width: 70%; margin: 0 auto;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 本月学习日历 -->
+        <div class="row" id="calendarContainer">
+            <div class="col-md-8 mb-3">
+                <div class="stat-card h-100">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0">本月学习日历</h5>
+                        <select class="form-select form-select-sm w-auto" id="selectChildForCalendar" style="display: none;">
+                            <option value="">所有孩子</option>
+                        </select>
+                    </div>
+                    <div class="calendar-container">
+                        <div id="learningCalendar" class="calendar-days">
+                            <!-- 日历骨架屏 -->
+                            <div class="skeleton" style="width: 30px; height: 30px;"></div>
+                            <!-- 重复30个 -->
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <small class="text-muted">
+                            <span class="d-inline-block me-3">
+                                <span class="calendar-day learned d-inline-block me-1"></span> 已学习
+                            </span>
+                            <span class="d-inline-block me-3">
+                                <span class="calendar-day partial d-inline-block me-1"></span> 部分学习
+                            </span>
+                            <span class="d-inline-block">
+                                <span class="calendar-day missed d-inline-block me-1"></span> 未学习
+                            </span>
+                        </small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4 mb-3">
+                <div class="stat-card h-100">
+                    <h5 class="mb-3">今日学习概览</h5>
+                    <div id="todayOverview">
+                        <div class="text-center py-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">加载中...</span>
+                            </div>
+                            <p class="mt-2 text-muted">加载今日数据...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 学习记录表格 -->
+        <div class="stat-card mt-4" id="recordsContainer">
+            <h5 class="mb-3">近期学习记录</h5>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>日期</th>
+                            <th>孩子姓名</th>
+                            <th>学习时长</th>
+                            <th>学习单词</th>
+                            <th>掌握数量</th>
+                            <th>状态</th>
+                        </tr>
+                    </thead>
+                    <tbody id="learningRecords">
+                        <!-- 表格骨架屏 -->
+                        <tr>
+                            <td><div class="skeleton" style="height: 20px;"></div></td>
+                            <td><div class="skeleton" style="height: 20px;"></div></td>
+                            <td><div class="skeleton" style="height: 20px;"></div></td>
+                            <td><div class="skeleton" style="height: 20px;"></div></td>
+                            <td><div class="skeleton" style="height: 20px;"></div></td>
+                            <td><div class="skeleton" style="height: 20px; width: 50px;"></div></td>
+                        </tr>
+                        <!-- 重复5行 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- 家长端主逻辑 - 优化版 -->
+    <script>
+        // 全局变量
+        let currentParent = null;
+        let childrenData = [];
+        let learningRecords = [];
+        let isLoading = false;
+
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', async function() {
+            // 立即显示页面结构
+            initPage();
+            
+            // 检查登录状态
+            const isAuthenticated = await checkLogin();
+            
+            if (isAuthenticated) {
+                // 预加载数据（不阻塞UI渲染）
+                setTimeout(() => loadInitialData(), 100);
+            }
+        });
+
+        // 初始化页面（立即执行）
+        function initPage() {
+            // 设置日期
+            const now = new Date();
+            document.getElementById('currentDate').textContent = 
+                `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日`;
+            
+            // 设置家长姓名（从localStorage获取）
+            const userName = localStorage.getItem('userName') || '家长用户';
+            document.getElementById('parentName').textContent = userName;
+            
+            // 初始化统计卡片骨架屏
+            initStatsSkeleton();
+            
+            // 初始化日历骨架屏
+            initCalendarSkeleton();
+            
+            // 初始化表格骨架屏
+            initTableSkeleton();
+            
+            // 移动端侧边栏切换
+            initSidebarToggle();
+        }
+
+        // 初始化统计卡片骨架屏
+        function initStatsSkeleton() {
+            const container = document.getElementById('statsContainer');
+            container.innerHTML = '';
+            
+            const stats = [
+                { title: '绑定孩子', color: 'primary' },
+                { title: '总学习天数', color: 'success' },
+                { title: '平均学习时长', color: 'warning' },
+                { title: '掌握单词总数', color: 'info' }
+            ];
+            
+            stats.forEach(stat => {
+                const col = document.createElement('div');
+                col.className = 'col-md-3 col-6 mb-3 fade-in';
+                col.style.animationDelay = `${Math.random() * 0.3}s`;
+                col.innerHTML = `
+                    <div class="stat-card">
+                        <div class="d-flex align-items-center">
+                            <div class="stat-icon bg-${stat.color} bg-opacity-10 text-${stat.color} me-3 skeleton skeleton-circle"
+                                 style="width: 50px; height: 50px;"></div>
+                            <div>
+                                <div class="skeleton mb-1" style="height: 28px; width: 60px;"></div>
+                                <div class="skeleton" style="height: 14px; width: 80px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(col);
+            });
+        }
+
+        // 初始化日历骨架屏
+        function initCalendarSkeleton() {
+            const calendar = document.getElementById('learningCalendar');
+            calendar.innerHTML = '';
+            
+            for (let i = 0; i < 30; i++) {
+                const day = document.createElement('div');
+                day.className = 'calendar-day skeleton';
+                calendar.appendChild(day);
+            }
+        }
+
+        // 初始化表格骨架屏
+        function initTableSkeleton() {
+            const tbody = document.getElementById('learningRecords');
+            tbody.innerHTML = '';
+            
+            for (let i = 0; i < 5; i++) {
+                const row = document.createElement('tr');
+                for (let j = 0; j < 6; j++) {
+                    const cell = document.createElement('td');
+                    const width = j === 5 ? '50px' : '100%';
+                    cell.innerHTML = `<div class="skeleton" style="height: 20px; width: ${width};"></div>`;
+                    row.appendChild(cell);
+                }
+                tbody.appendChild(row);
+            }
+        }
+
+        // 检查登录状态
+        async function checkLogin() {
+            const userRole = localStorage.getItem('userRole');
+            const userName = localStorage.getItem('userName');
+            
+            if (!userRole || userRole !== 'parent') {
+                showToast('请先登录家长账号', 'warning');
+                setTimeout(() => window.location.href = 'index.html', 1500);
+                return false;
+            }
+            
+            // 设置当前家长信息
+            currentParent = {
+                id: 'p_' + Date.now(),
+                name: userName,
+                email: '',
+                phone: ''
+            };
+            
+            return true;
+        }
+
+        // 加载初始数据（优化性能）
+        async function loadInitialData() {
+            if (isLoading) return;
+            isLoading = true;
+            
+            try {
+                // 并行加载关键数据
+                await Promise.all([
+                    loadChildrenData(),
+                    loadLearningRecords()
+                ]);
+                
+                // 隐藏加载动画
+                hideLoading();
+                
+                // 分阶段更新UI，避免阻塞
+                setTimeout(() => updateStats(), 50);
+                setTimeout(() => updateChildrenList(), 100);
+                setTimeout(() => updateCalendar(), 150);
+                setTimeout(() => updateTodayOverview(), 200);
+                setTimeout(() => updateLearningRecords(), 250);
+                setTimeout(() => updateCalendarSelector(), 300);
+                
+            } catch (error) {
+                console.error('加载数据失败:', error);
+                showToast('数据加载失败，请重试', 'danger');
+            } finally {
+                isLoading = false;
+            }
+        }
+
+        // 加载孩子数据（优化版）
+        async function loadChildrenData() {
+            return new Promise(resolve => {
+                setTimeout(() => {
+                    // 模拟数据 - 实际应从Supabase获取
+                    childrenData = [
+                        {
+                            id: 's1',
+                            name: '张三',
+                            grade: '五年级',
+                            parentId: currentParent.id,
+                            teacherId: 't1',
+                            progress: 85,
+                            todayStats: {
+                                hasLearned: true,
+                                learningTime: 45,
+                                newWords: 20,
+                                mastered: 16,
+                                fuzzy: 4
+                            },
+                            monthlyStats: generateMonthlyStats('s1')
+                        },
+                        {
+                            id: 's2',
+                            name: '李四',
+                            grade: '四年级',
+                            parentId: currentParent.id,
+                            teacherId: 't1',
+                            progress: 72,
+                            todayStats: {
+                                hasLearned: false,
+                                learningTime: 0,
+                                newWords: 0,
+                                mastered: 0,
+                                fuzzy: 0
+                            },
+                            monthlyStats: generateMonthlyStats('s2')
+                        }
+                    ];
+                    resolve();
+                }, 800); // 模拟网络延迟
+            });
+        }
+
+        // 生成月度统计（缓存优化）
+        function generateMonthlyStats(childId) {
+            const daysInMonth = 30;
+            const stats = {
+                learningDays: 0,
+                totalTime: 0,
+                totalWords: 0,
+                calendar: []
+            };
+            
+            // 使用种子确保相同childId生成相同数据
+            const seed = childId.charCodeAt(0) + childId.charCodeAt(1);
+            
+            for (let i = 1; i <= daysInMonth; i++) {
+                // 使用伪随机但可预测的算法
+                const pseudoRandom = Math.sin(seed + i) * 10000;
+                const random = pseudoRandom - Math.floor(pseudoRandom);
+                
+                const hasLearned = random > 0.4; // 60%概率学习
+                const learnedPartially = hasLearned && random > 0.7;
+                
+                if (hasLearned) {
+                    stats.learningDays++;
+                    stats.totalTime += Math.floor(random * 60) + 15;
+                    stats.totalWords += Math.floor(random * 25) + 10;
+                }
+                
+                stats.calendar.push({
+                    day: i,
+                    status: hasLearned ? (learnedPartially ? 'partial' : 'learned') : 'missed'
+                });
+            }
+            
+            return stats;
+        }
+
+        // 加载学习记录
+        async function loadLearningRecords() {
+            return new Promise(resolve => {
+                setTimeout(() => {
+                    learningRecords = [];
+                    childrenData.forEach(child => {
+                        // 生成最近7天的记录
+                        for (let i = 6; i >= 0; i--) {
+                            const date = new Date();
+                            date.setDate(date.getDate() - i);
+                            
+                            // 70%概率有记录
+                            if (Math.random() > 0.3) {
+                                const duration = Math.floor(Math.random() * 45) + 15;
+                                const words = Math.floor(Math.random() * 25) + 5;
+                                const mastered = Math.floor(words * 0.7);
+                                
+                                learningRecords.push({
+                                    date: date.toISOString().split('T')[0],
+                                    childName: child.name,
+                                    duration: duration,
+                                    words: words,
+                                    mastered: mastered,
+                                    status: duration > 30 ? '优秀' : '良好'
+                                });
+                            }
+                        }
+                    });
+                    
+                    // 按日期排序
+                    learningRecords.sort((a, b) => b.date.localeCompare(a.date));
+                    resolve();
+                }, 500);
+            });
+        }
+
+        // 更新统计卡片
+        function updateStats() {
+            const totalChildren = childrenData.length;
+            const totalDays = childrenData.reduce((sum, child) => 
+                sum + child.monthlyStats.learningDays, 0);
+            const avgTime = childrenData.length > 0 ? 
+                Math.floor(childrenData.reduce((sum, child) => 
+                    sum + child.monthlyStats.totalTime, 0) / childrenData.length) : 0;
+            const totalWords = childrenData.reduce((sum, child) => 
+                sum + child.monthlyStats.totalWords, 0);
+            
+            // 使用动画更新数字
+            animateNumber('childrenCount', totalChildren);
+            animateNumber('totalLearningDays', totalDays);
+            animateNumber('avgLearningTime', avgTime);
+            animateNumber('totalWords', totalWords);
+            
+            // 更新卡片内容
+            const stats = [
+                { id: 'childrenCount', icon: 'fa-child', color: 'primary' },
+                { id: 'totalLearningDays', icon: 'fa-check-circle', color: 'success' },
+                { id: 'avgLearningTime', icon: 'fa-clock', color: 'warning' },
+                { id: 'totalWords', icon: 'fa-brain', color: 'info' }
+            ];
+            
+            const container = document.getElementById('statsContainer');
+            container.innerHTML = '';
+            
+            stats.forEach((stat, index) => {
+                const value = {
+                    'childrenCount': totalChildren,
+                    'totalLearningDays': totalDays,
+                    'avgLearningTime': avgTime,
+                    'totalWords': totalWords
+                }[stat.id];
+                
+                const title = {
+                    'childrenCount': '绑定孩子',
+                    'totalLearningDays': '总学习天数',
+                    'avgLearningTime': '平均学习时长(分钟)',
+                    'totalWords': '掌握单词总数'
+                }[stat.id];
+                
+                const col = document.createElement('div');
+                col.className = 'col-md-3 col-6 mb-3 fade-in';
+                col.style.animationDelay = `${index * 0.1}s`;
+                col.innerHTML = `
+                    <div class="stat-card">
+                        <div class="d-flex align-items-center">
+                            <div class="stat-icon bg-${stat.color} bg-opacity-10 text-${stat.color} me-3">
+                                <i class="fas ${stat.icon}"></i>
+                            </div>
+                            <div>
+                                <h4 class="mb-0" id="${stat.id}">${value}</h4>
+                                <small class="text-muted">${title}</small>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(col);
+            });
+        }
+
+        // 数字动画
+        function animateNumber(elementId, targetValue, duration = 1000) {
+            const element = document.getElementById(elementId);
+            if (!element) return;
+            
+            const startValue = parseInt(element.textContent) || 0;
+            const increment = (targetValue - startValue) / (duration / 16);
+            let current = startValue;
+            
+            const timer = setInterval(() => {
+                current += increment;
+                if ((increment > 0 && current >= targetValue) || 
+                    (increment < 0 && current <= targetValue)) {
+                    element.textContent = targetValue;
+                    clearInterval(timer);
+                } else {
+                    element.textContent = Math.round(current);
+                }
+            }, 16);
+        }
+
+        // 更新孩子列表
+        function updateChildrenList() {
+            const container = document.getElementById('childrenList');
+            container.innerHTML = '';
+            
+            childrenData.forEach((child, index) => {
+                const today = child.todayStats;
+                const col = document.createElement('div');
+                col.className = 'col-md-6 col-lg-4 mb-3 fade-in';
+                col.style.animationDelay = `${index * 0.1}s`;
+                col.innerHTML = `
+                    <div class="child-card">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="child-avatar me-3">
+                                ${child.name.charAt(0)}
+                            </div>
+                            <div>
+                                <h5 class="mb-1">${child.name}</h5>
+                                <p class="text-muted mb-0">
+                                    <small>${child.grade || '未设置年级'}</small>
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>学习进度</span>
+                                <span class="fw-bold">${child.progress}%</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar" role="progressbar" 
+                                     style="width: ${child.progress}%"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <div class="mb-1">
+                                    <i class="fas fa-calendar-check text-success"></i>
+                                </div>
+                                <div class="fw-bold">${child.monthlyStats.learningDays}</div>
+                                <small class="text-muted">本月天数</small>
+                            </div>
+                            <div class="col-6">
+                                <div class="mb-1">
+                                    <i class="fas fa-clock text-warning"></i>
+                                </div>
+                                <div class="fw-bold">${Math.floor(child.monthlyStats.totalTime / 60)}h</div>
+                                <small class="text-muted">总时长</small>
+                            </div>
+                        </div>
+                        
+                        <hr class="my-3">
+                        
+                        <div>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span>今日状态:</span>
+                                <span class="badge ${today.hasLearned ? 'bg-success' : 'bg-secondary'}">
+                                    ${today.hasLearned ? '已打卡' : '未打卡'}
+                                </span>
+                            </div>
+                            ${today.hasLearned ? `
+                                <div class="d-flex justify-content-between small">
+                                    <span>新学单词: ${today.newWords}</span>
+                                    <span>时长: ${today.learningTime}分钟</span>
+                                </div>
+                            ` : '<p class="text-muted small mb-0">今日还未开始学习</p>'}
+                        </div>
+                    </div>
+                `;
+                container.appendChild(col);
+            });
+        }
+
+        // 更新日历
+        function updateCalendar(selectedChildId = '') {
+            const container = document.getElementById('learningCalendar');
+            container.innerHTML = '';
+            
+            let calendarData = [];
+            
+            if (selectedChildId) {
+                const child = childrenData.find(c => c.id === selectedChildId);
+                calendarData = child ? child.monthlyStats.calendar : [];
+            } else {
+                // 合并所有孩子的数据
+                const today = new Date().getDate();
+                calendarData = Array.from({length: 30}, (_, i) => {
+                    const day = i + 1;
+                    let status = 'missed';
+                    
+                    // 检查是否有孩子在这一天学习了
+                    const hasLearned = childrenData.some(child => {
+                        const dayData = child.monthlyStats.calendar.find(d => d.day === day);
+                        return dayData && dayData.status !== 'missed';
+                    });
+                    
+                    const learnedFully = childrenData.some(child => {
+                        const dayData = child.monthlyStats.calendar.find(d => d.day === day);
+                        return dayData && dayData.status === 'learned';
+                    });
+                    
+                    if (hasLearned) {
+                        status = learnedFully ? 'learned' : 'partial';
+                    }
+                    
+                    return { day, status };
+                });
+            }
+            
+            calendarData.forEach((day, index) => {
+                const dayEl = document.createElement('div');
+                dayEl.className = `calendar-day ${day.status} fade-in`;
+                dayEl.textContent = day.day;
+                dayEl.style.animationDelay = `${index * 0.03}s`;
+                container.appendChild(dayEl);
+            });
+        }
+
+        // 更新今日概览
+        function updateTodayOverview() {
+            const container = document.getElementById('todayOverview');
+            const today = new Date().toISOString().split('T')[0];
+            
+            const todayRecords = learningRecords.filter(record => record.date === today);
+            
+            if (todayRecords.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-4 fade-in">
+                        <i class="fas fa-calendar-day text-muted fa-3x mb-3"></i>
+                        <p class="text-muted">今日暂无学习记录</p>
+                        <button class="btn btn-sm btn-outline-primary mt-2" onclick="remindChildren()">
+                            <i class="fas fa-bell me-1"></i>提醒孩子学习
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+            
+            const totalDuration = todayRecords.reduce((sum, r) => sum + r.duration, 0);
+            const totalWords = todayRecords.reduce((sum, r) => sum + r.words, 0);
+            const totalMastered = todayRecords.reduce((sum, r) => sum + r.mastered, 0);
+            const avgMasteryRate = totalWords > 0 ? Math.round((totalMastered / totalWords) * 100) : 0;
+            
+            container.innerHTML = `
+                <div class="mb-3 fade-in">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <span>学习人数</span>
+                        <span class="fw-bold fs-5">${todayRecords.length}人</span>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <span>总学习时长</span>
+                        <span class="fw-bold text-primary">${totalDuration}分钟</span>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <span>学习单词数</span>
+                        <span class="fw-bold text-success">${totalWords}个</span>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <span>掌握单词数</span>
+                        <span class="fw-bold text-warning">${totalMastered}个</span>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <span>掌握率</span>
+                        <span class="fw-bold ${avgMasteryRate > 80 ? 'text-success' : 'text-warning'}">
+                            ${avgMasteryRate}%
+                        </span>
+                    </div>
+                </div>
+                <div class="mt-4 fade-in" style="animation-delay: 0.2s">
+                    <small class="text-muted">
+                        <i class="fas fa-check-circle text-success me-1"></i>
+                        今日学习情况${avgMasteryRate > 80 ? '优秀' : '良好'}，请继续保持！
+                    </small>
+                </div>
+            `;
+        }
+
+        // 更新学习记录表
+        function updateLearningRecords() {
+            const container = document.getElementById('learningRecords');
+            container.innerHTML = '';
+            
+            const recentRecords = learningRecords.slice(0, 10);
+            
+            if (recentRecords.length === 0) {
+                container.innerHTML = `
+                    <tr class="fade-in">
+                        <td colspan="6" class="text-center py-4 text-muted">
+                            <i class="fas fa-inbox fa-2x mb-2"></i>
+                            <p>暂无学习记录</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            recentRecords.forEach((record, index) => {
+                const date = new Date(record.date);
+                const formattedDate = `${date.getMonth() + 1}月${date.getDate()}日`;
+                
+                const row = document.createElement('tr');
+                row.className = 'fade-in';
+                row.style.animationDelay = `${index * 0.05}s`;
+                row.innerHTML = `
+                    <td>${formattedDate}</td>
+                    <td>${record.childName}</td>
+                    <td><span class="badge bg-light text-dark">${record.duration}分钟</span></td>
+                    <td>${record.words}个</td>
+                    <td><span class="fw-bold">${record.mastered}个</span></td>
+                    <td>
+                        <span class="badge ${record.status === '优秀' ? 'bg-success' : 'bg-info'}">
+                            <i class="fas fa-${record.status === '优秀' ? 'crown' : 'star'} me-1"></i>
+                            ${record.status}
+                        </span>
+                    </td>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        // 更新日历选择器
+        function updateCalendarSelector() {
+            const select = document.getElementById('selectChildForCalendar');
+            if (childrenData.length > 1) {
+                select.style.display = 'block';
+                select.innerHTML = '<option value="">所有孩子</option>';
+                
+                childrenData.forEach(child => {
+                    const option = document.createElement('option');
+                    option.value = child.id;
+                    option.textContent = child.name;
+                    select.appendChild(option);
+                });
+                
+                select.onchange = () => updateCalendar(select.value);
+            }
+        }
+
+        // 刷新数据
+        async function refreshData() {
+            if (isLoading) return;
+            
+            const btn = document.getElementById('refreshBtn');
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>刷新中...';
+            btn.disabled = true;
+            
+            try {
+                await loadInitialData();
+                showToast('数据已刷新', 'success');
+            } catch (error) {
+                showToast('刷新失败，请重试', 'danger');
+            } finally {
+                btn.innerHTML = originalHTML;
+                btn.disabled = false;
+            }
+        }
+
+        // 提醒孩子学习
+        function remindChildren() {
+            showToast('提醒已发送给孩子', 'info');
+        }
+
+        // 隐藏加载动画
+        function hideLoading() {
+            const loading = document.getElementById('pageLoading');
+            if (loading) {
+                loading.style.opacity = '0';
+                setTimeout(() => {
+                    loading.style.display = 'none';
+                }, 300);
+            }
+        }
+
+        // 显示Toast提示
+        function showToast(message, type = 'info') {
+            // 移除旧的toast
+            const oldToast = document.querySelector('.custom-toast');
+            if (oldToast) oldToast.remove();
+            
+            const icons = {
+                'success': 'check-circle',
+                'error': 'exclamation-circle',
+                'warning': 'exclamation-triangle',
+                'info': 'info-circle',
+                'danger': 'times-circle'
+            };
+            
+            const toast = document.createElement('div');
+            toast.className = 'custom-toast';
+            toast.innerHTML = `
+                <div class="toast show" role="alert">
+                    <div class="toast-header bg-${type} text-white">
+                        <i class="fas fa-${icons[type] || 'info-circle'} me-2"></i>
+                        <strong class="me-auto">提示</strong>
+                        <button type="button" class="btn-close btn-close-white" 
+                                onclick="this.closest('.custom-toast').remove()"></button>
+                    </div>
+                    <div class="toast-body">
+                        ${message}
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.remove();
+                }
+            }, 3000);
+        }
+
+        // 侧边栏切换（移动端）
+        function initSidebarToggle() {
+            const toggleBtn = document.getElementById('sidebarToggle');
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('mainContent');
+            
+            if (toggleBtn && sidebar) {
+                toggleBtn.addEventListener('click', () => {
+                    sidebar.classList.toggle('open');
+                    mainContent.classList.toggle('expanded');
+                });
+                
+                // 点击内容区域关闭侧边栏
+                mainContent.addEventListener('click', () => {
+                    if (window.innerWidth <= 992 && sidebar.classList.contains('open')) {
+                        sidebar.classList.remove('open');
+                        mainContent.classList.remove('expanded');
+                    }
+                });
+            }
+        }
+
+        // 退出登录
+        function logout() {
+            localStorage.removeItem('userRole');
+            localStorage.removeItem('userName');
+            showToast('正在退出...', 'info');
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 500);
+        }
+
+        // 窗口大小变化时调整布局
+        window.addEventListener('resize', function() {
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('mainContent');
+            
+            if (window.innerWidth > 992) {
+                sidebar.classList.remove('open');
+                mainContent.classList.remove('expanded');
+            }
+        });
+
+        // 初始化页面加载完成
+        setTimeout(() => {
+            if (document.getElementById('pageLoading').style.display !== 'none') {
+                hideLoading();
+            }
+        }, 3000); // 最长加载时间3秒
+
+    </script>
+</body>
+</html>
