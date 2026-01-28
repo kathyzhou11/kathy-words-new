@@ -1,354 +1,825 @@
+
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kathy单词大师训练营</title>
-    
-    <!-- 引入Supabase库 -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4/dist/umd/supabase.min.js"></script>
-    
-    <!-- 引入CSS样式文件 -->
-    <link rel="stylesheet" href="style.css">
-    
+    <title>单词大师训练营 - 智能登录</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
     <style>
-        /* 添加一些临时样式确保基本显示 */
-        .loading-overlay {
-            position: fixed;
+        /* 添加到页面的额外样式 */
+        :root {
+            --primary: #4a6bdf;
+            --primary-light: #667eea;
+            --primary-dark: #3a56c9;
+            --secondary: #6c757d;
+            --success: #28a745;
+            --warning: #ffc107;
+            --danger: #dc3545;
+            --gray: #8a8d93;
+            --light: #f8f9fa;
+        }
+        
+        .login-wrapper {
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+        
+        .particles-container {
+            position: absolute;
             top: 0;
             left: 0;
-            right: 0;
-            bottom: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
+        
+        .particle {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            animation: float 20s infinite linear;
+        }
+        
+        @keyframes float {
+            0% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.8;
+            }
+            90% {
+                opacity: 0.8;
+            }
+            100% {
+                transform: translateY(-100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+        
+        .login-container {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            max-width: 450px;
+        }
+        
+        .login-card {
             background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+        
+        .login-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .logo {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        
+        .logo i {
+            font-size: 60px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+        }
+        
+        .title {
+            text-align: center;
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: var(--gray);
+            margin-bottom: 30px;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+        
+        .input-group {
+            margin-bottom: 25px;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 10px;
+            color: var(--gray);
+            font-weight: 500;
+        }
+        
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 12px 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .input-wrapper:focus-within {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(74, 107, 223, 0.1);
+            transform: translateY(-1px);
+        }
+        
+        .input-wrapper i {
+            color: var(--gray);
+            margin-right: 12px;
+            font-size: 18px;
+        }
+        
+        .input-wrapper input {
+            flex: 1;
+            border: none;
+            outline: none;
+            font-size: 16px;
+            background: transparent;
+        }
+        
+        .input-wrapper input::placeholder {
+            color: #adb5bd;
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px 24px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            width: 100%;
+            gap: 10px;
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-success:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+        
+        .role-selector {
+            margin-top: 25px;
+            padding-top: 25px;
+            border-top: 1px solid #e9ecef;
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        .role-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        @media (max-width: 576px) {
+            .role-buttons {
+                flex-direction: column;
+            }
+        }
+        
+        .role-btn {
+            flex: 1;
             display: flex;
             flex-direction: column;
-            justify-content: center;
             align-items: center;
-            z-index: 9999;
-            font-family: Arial, sans-serif;
+            padding: 20px 15px;
+            border: 2px solid transparent;
+            border-radius: 16px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-height: 120px;
         }
         
-        .loading-spinner {
-            width: 60px;
-            height: 60px;
-            border: 5px solid #f3f3f3;
-            border-top: 5px solid #3498db;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-bottom: 20px;
+        .role-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
         }
         
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        .role-btn.active {
+            border-color: var(--primary);
+            box-shadow: 0 8px 16px rgba(74, 107, 223, 0.15);
         }
         
-        /* 确保基础样式加载前有基本显示 */
-        .container {
-            display: none;
+        .role-btn i {
+            font-size: 32px;
+            margin-bottom: 12px;
+            transition: all 0.3s ease;
+        }
+        
+        .role-btn.teacher {
+            color: #667eea;
+        }
+        
+        .role-btn.teacher.active {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+        }
+        
+        .role-btn.parent {
+            color: #f093fb;
+        }
+        
+        .role-btn.parent.active {
+            background: linear-gradient(135deg, rgba(240, 147, 251, 0.1) 0%, rgba(245, 87, 108, 0.1) 100%);
+        }
+        
+        .role-btn.student {
+            color: #4facfe;
+        }
+        
+        .role-btn.student.active {
+            background: linear-gradient(135deg, rgba(79, 172, 254, 0.1) 0%, rgba(0, 242, 254, 0.1) 100%);
+        }
+        
+        .role-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+            font-size: 16px;
+        }
+        
+        .role-desc {
+            color: var(--gray);
+            font-size: 12px;
+            text-align: center;
+        }
+        
+        .achievement-scroll {
+            margin: 30px 0;
+            padding: 20px 0;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .achievement-track {
+            display: flex;
+            animation: scrollLeft 30s linear infinite;
+            width: max-content;
+        }
+        
+        .achievement-track:hover {
+            animation-play-state: paused;
+        }
+        
+        .achievement-item {
+            background: white;
+            border-radius: 12px;
+            padding: 12px 20px;
+            margin: 0 15px;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            min-width: 200px;
+        }
+        
+        .achievement-item i {
+            color: var(--primary);
+            font-size: 18px;
+        }
+        
+        .achievement-item span {
+            color: #495057;
+            font-weight: 500;
+        }
+        
+        @keyframes scrollLeft {
+            0% {
+                transform: translateX(0);
+            }
+            100% {
+                transform: translateX(-50%);
+            }
+        }
+        
+        .test-accounts {
+            background: rgba(74, 107, 223, 0.05);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 25px;
+            border: 1px solid rgba(74, 107, 223, 0.1);
+        }
+        
+        .test-accounts h4 {
+            color: var(--primary);
+            margin-bottom: 15px;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .test-accounts h4 i {
+            color: var(--primary);
+        }
+        
+        .account-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        
+        .account-item:last-child {
+            border-bottom: none;
+        }
+        
+        .account-role {
+            font-weight: 500;
+            color: #495057;
+        }
+        
+        .account-credentials {
+            color: var(--gray);
+            font-size: 14px;
+        }
+        
+        .account-credentials:hover {
+            color: var(--primary);
+            cursor: pointer;
+        }
+        
+        .role-hint {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--gray);
+            font-size: 14px;
+            margin-bottom: 15px;
+            padding: 10px 15px;
+            background: rgba(74, 107, 223, 0.05);
+            border-radius: 8px;
+            border-left: 3px solid var(--primary);
+        }
+        
+        .role-hint i {
+            color: var(--primary);
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.4);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(102, 126, 234, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(102, 126, 234, 0);
+            }
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .login-card {
+                padding: 30px 20px;
+                margin: 0 20px;
+            }
+            
+            .title {
+                font-size: 28px;
+            }
+            
+            .role-buttons {
+                gap: 10px;
+            }
+            
+            .role-btn {
+                min-height: 100px;
+                padding: 15px 10px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .login-wrapper {
+                padding: 10px;
+            }
+            
+            .login-card {
+                padding: 25px 15px;
+            }
+            
+            .title {
+                font-size: 24px;
+            }
+            
+            .subtitle {
+                font-size: 14px;
+            }
+            
+            .btn {
+                padding: 14px 20px;
+                font-size: 15px;
+            }
+            
+            .role-btn i {
+                font-size: 28px;
+            }
         }
     </style>
 </head>
 <body>
-    <!-- 全局加载遮罩 -->
-    <div id="global-loading" class="loading-overlay" style="display: none;">
-        <div class="loading-spinner"></div>
-        <div class="loading-text" id="loading-message">正在加载...</div>
-        <div style="color: #666; margin-top: 10px;" id="loading-details"></div>
-    </div>
-
-    <div class="container">
-        <div class="header">
-            <h1>⚡ Kathy单词大师训练营</h1>
-            <h2 style="color: white;">👭和单词做朋友🧡</h2>
-            <p style="color: #BDC3C7; font-size: 0.9em;">👑 教师：Kathy | 💬 微信：Kathy151</p>
-        </div>
+    <!-- 主容器 -->
+    <div class="login-wrapper">
+        <!-- 粒子动画背景 -->
+        <div class="particles-container" id="particles"></div>
         
-        <div class="main-content">
-            <!-- 登录界面 -->
-            <div id="login-screen" class="screen active">
-                <div style="text-align: center;">
-                    <h2>👑 欢迎使用单词训练系统</h2>
-                    <p style="color: #666; margin-bottom: 30px;">🧡Kathy陪你一起和单词玩游戏🧡</p>
-                    
-                    <div style="margin: 30px 0;">
-                        <input type="text" id="username" placeholder="请输入用户名" autofocus>
-                        <div id="login-message" class="message-box message-info">
-                            正在连接系统...
-                        </div>
-                        
-                        <div style="margin: 25px 0;">
-                            <button class="btn" id="login-btn">🔑 登录/注册</button>
-                            <button class="btn btn-blue" id="test-btn">测试连接</button>
-                        </div>
-                    </div>
-                    
-                    <div style="background: #f8f9fa; border-radius: 15px; padding: 25px; margin: 30px 0;">
-                        <h3 style="color: #2C3E50; margin-bottom: 20px;">📱 使用说明</h3>
-                        <div class="card-grid">
-                            <div class="stat-card">
-                                <div style="font-size: 2em;">👩‍🏫</div>
-                                <div style="font-weight: bold; margin: 10px 0;">Kathy教师端</div>
-                                <div>关注宝们每天单词进度</div>
-                                <div>今天你和单词玩游戏了么？</div>
-                            </div>
-                            <div class="stat-card">
-                                <div style="font-size: 2em;">🎓</div>
-                                <div style="font-weight: bold; margin: 10px 0;">学生账号</div>
-                                <div>Kathy单独发送</div>
-                                <div>名字首字母要大写哦</div>
-                            </div>
-                        </div>
-                        
-                        <div style="margin-top: 25px;">
-                            <div class="wechat-badge">
-                                <span>📞 教师微信：</span>
-                                <strong>Kathy151</strong>
-                            </div>
-                            <p style="color: #555; margin-top: 15px;">有任何问题请随时联系老师</p>
-                        </div>
-                    </div>
+        <!-- 登录卡片 -->
+        <div class="login-container">
+            <div class="login-card" id="loginCard">
+                <!-- Logo -->
+                <div class="logo">
+                    <i class="fas fa-brain"></i>
                 </div>
-            </div>
-            
-            <!-- 教师主界面 -->
-            <div id="teacher-screen" class="screen">
-                <div class="fixed-header">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <h2 style="margin: 0; color: #333;">👑 教师管理面板</h2>
-                        <button class="btn btn-red" onclick="handleLogout()" style="padding: 8px 16px;">
-                            <span>🚪 退出</span>
-                        </button>
+                
+                <!-- 标题 -->
+                <h1 class="title">单词大师训练营</h1>
+                <p class="subtitle">基于行为心理学的高效单词学习系统</p>
+                
+                <!-- 登录表单 -->
+                <div class="input-group">
+                    <label for="loginInput">请输入任意内容进入系统</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-user"></i>
+                        <input type="text" id="loginInput" placeholder="输入任意内容进入" autocomplete="off" autofocus>
                     </div>
                 </div>
                 
-                <div class="content-padding">
-                    <div id="teacher-stats" class="stats-card">
-                        <h3 style="color: #9C27B0; margin-bottom: 20px;">📊 系统概览</h3>
-                        <div class="card-grid">
-                            <div class="stat-card">
-                                <div class="number" id="total-words">0</div>
-                                <div class="label">单词总数</div>
-                            </div>
-                            <div class="stat-card">
-                                <div class="number" id="total-students">0</div>
-                                <div class="label">学生总数</div>
-                            </div>
-                            <div class="stat-card">
-                                <div class="number" id="mastered-words">0</div>
-                                <div class="label">已掌握单词</div>
-                            </div>
-                            <div class="stat-card">
-                                <div class="number" id="active-students">0</div>
-                                <div class="label">活跃学生</div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div style="text-align: center; margin: 30px 0;">
-                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px;">
-                            <button class="btn btn-purple" onclick="showUploadWordsPage()" style="height: 80px; font-size: 18px;">
-                                <div>📝</div>
-                                <div>上传单词</div>
-                            </button>
-                            <button class="btn btn-blue" onclick="showGroupManagementPage()" style="height: 80px; font-size: 18px;">
-                                <div>👥</div>
-                                <div>分组管理</div>
-                            </button>
-                            <button class="btn" onclick="showAllStudentsPage()" style="height: 80px; font-size: 18px;">
-                                <div>📋</div>
-                                <div>所有学生</div>
-                            </button>
-                            <button class="btn btn-gold" onclick="showLearningProgressPage()" style="height: 80px; font-size: 18px;">
-                                <div>📊</div>
-                                <div>学习进度</div>
-                            </button>
-                            <button class="btn" onclick="showWordManagementPage()" style="height: 80px; font-size: 18px;">
-                                <div>📖</div>
-                                <div>单词管理</div>
-                            </button>
-                            <button class="btn" onclick="showShareSystemPage()" style="height: 80px; font-size: 18px;">
-                                <div>🔗</div>
-                                <div>分享系统</div>
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <div id="teacher-content">
-                        <!-- 教师功能内容区 -->
-                    </div>
+                <!-- 角色选择提示 -->
+                <div class="role-hint" id="roleHint" style="display: none;">
+                    <i class="fas fa-info-circle"></i>
+                    <span>请选择您的角色以进入对应系统</span>
                 </div>
-            </div>
-            
-            <!-- 学生主界面 -->
-            <div id="student-screen" class="screen">
-                <div class="fixed-header">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <h2 style="margin: 0; color: #333;">🎓 欢迎，<span id="student-name"></span>！</h2>
-                            <div style="display: flex; align-items: center; gap: 15px; margin-top: 5px;">
-                                <div id="clock-in-status" style="background: #4CAF50; color: white; padding: 5px 10px; border-radius: 15px; font-size: 14px;">
-                                    ✅ 今日已打卡
-                                </div>
-                                <div style="color: #666; font-size: 14px;">
-                                    <span id="consecutive-days">0</span> 天连续学习
-                                </div>
-                            </div>
+                
+                <!-- 角色选择 -->
+                <div class="role-selector" id="roleSelector" style="display: none;">
+                    <div class="role-buttons">
+                        <div class="role-btn teacher" data-role="teacher" onclick="selectRole('teacher')">
+                            <i class="fas fa-chalkboard-teacher"></i>
+                            <div class="role-name">教师端</div>
+                            <div class="role-desc">班级管理 & 数据分析</div>
                         </div>
-                        <button class="btn btn-red" onclick="handleLogout()" style="padding: 8px 16px;">
-                            <span>🚪 退出</span>
-                        </button>
+                        <div class="role-btn parent" data-role="parent" onclick="selectRole('parent')">
+                            <i class="fas fa-user-friends"></i>
+                            <div class="role-name">家长端</div>
+                            <div class="role-desc">学习监督 & 进度查看</div>
+                        </div>
+                        <div class="role-btn student" data-role="student" onclick="selectRole('student')">
+                            <i class="fas fa-user-graduate"></i>
+                            <div class="role-name">学生端</div>
+                            <div class="role-desc">单词学习 & 游戏训练</div>
+                        </div>
                     </div>
                 </div>
                 
-                <div class="content-padding">
-                    <!-- 今日学习情况 -->
-                    <div id="today-status" style="margin-bottom: 30px;">
-                        <!-- 动态加载今日数据 -->
+                <!-- 登录按钮 -->
+                <button class="btn btn-success pulse" id="loginBtn" disabled onclick="handleLogin()">
+                    <i class="fas fa-rocket"></i>
+                    <span>进入学习宇宙</span>
+                </button>
+                
+                <!-- 成就滚动 -->
+                <div class="achievement-scroll">
+                    <div class="achievement-track" id="achievementTrack">
+                        <!-- 成就项通过JS动态生成 -->
                     </div>
-                    
-                    <!-- 我的学习进度 -->
-                    <div id="my-progress-summary" class="stats-card" style="margin-bottom: 30px;">
-                        <h3 style="color: #2196F3; margin-bottom: 20px;">📊 我的学习进度</h3>
-                        <!-- 动态加载进度数据 -->
+                </div>
+                
+                <!-- 测试账号 -->
+                <div class="test-accounts">
+                    <h4><i class="fas fa-key"></i> 测试账号说明</h4>
+                    <div class="account-item">
+                        <div class="account-role">教师账号</div>
+                        <div class="account-credentials" onclick="fillInput('kathy151')">kathy151</div>
                     </div>
-                    
-                    <!-- 快速操作按钮 -->
-                    <div style="background: #f8f9fa; border-radius: 15px; padding: 25px; margin-bottom: 30px;">
-                        <h3 style="color: #333; margin-bottom: 20px; text-align: center;">🚀 快速开始</h3>
-                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
-                            <button class="btn" onclick="dailyClockIn()" style="height: 80px; font-size: 18px;">
-                                <div>📅</div>
-                                <div>每日打卡</div>
-                            </button>
-                            
-                            <button class="btn" onclick="showTrainingOptions()" style="height: 80px; font-size: 18px;">
-                                <div>🎯</div>
-                                <div>开始训练</div>
-                            </button>
-                            
-                            <button class="btn btn-blue" onclick="showClockInStats()" style="height: 80px; font-size: 18px;">
-                                <div>📊</div>
-                                <div>学习统计</div>
-                            </button>
-                            
-                            <button class="btn" onclick="showMyWordListPage()" style="height: 80px; font-size: 18px;">
-                                <div>📖</div>
-                                <div>我的单词本</div>
-                            </button>
-                            
-                            <button class="btn" onclick="startReviewTraining()" style="height: 80px; font-size: 18px;">
-                                <div>🔄</div>
-                                <div>复习弱项</div>
-                            </button>
-                            
-                            <button class="btn" onclick="showReviewPlan()" style="height: 80px; font-size: 18px; grid-column: span 2;">
-                                <div>📋</div>
-                                <div>智能复习</div>
-                            </button>
-                            
-                            <button class="btn btn-gold" onclick="manualSyncWords()" style="height: 80px; font-size: 18px; grid-column: span 2;">
-                                <div>🔄</div>
-                                <div>立即同步</div>
-                            </button>
-                        </div>
+                    <div class="account-item">
+                        <div class="account-role">家长账号</div>
+                        <div class="account-credentials" onclick="fillInput('parent_zhang')">parent_zhang</div>
                     </div>
-                    
-                    <!-- 我的分组详情 -->
-                    <div id="group-details" style="margin-bottom: 30px;">
-                        <!-- 动态加载分组详情 -->
+                    <div class="account-item">
+                        <div class="account-role">学生账号</div>
+                        <div class="account-credentials" onclick="fillInput('小明')">任意输入</div>
                     </div>
                 </div>
             </div>
-            
-            <!-- 其他页面保持不变... -->
-            <!-- 由于代码太长，这里省略了其他页面的重复代码 -->
-            <!-- 确保你保留了所有其他页面的div -->
-            
         </div>
     </div>
 
+    <script src="config.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2.38.4"></script>
     <script>
-        // 页面加载初始化
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('页面加载完成，正在初始化...');
+        // 初始化 Supabase
+        const supabase = window.supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.key);
+        
+        // 粒子动画
+        function initParticles() {
+            const container = document.getElementById('particles');
+            container.innerHTML = '';
             
-            // 显示加载状态
-            document.getElementById('global-loading').style.display = 'flex';
-            document.getElementById('loading-message').textContent = '正在加载系统...';
-            
-            // 确保容器显示
-            setTimeout(() => {
-                document.querySelector('.container').style.display = 'block';
-            }, 100);
-            
-            // 绑定按钮事件
-            const loginBtn = document.getElementById('login-btn');
-            const testBtn = document.getElementById('test-btn');
-            
-            if (loginBtn) {
-                loginBtn.addEventListener('click', function() {
-                    console.log('登录按钮点击');
-                    if (typeof handleLogin === 'function') {
-                        handleLogin();
-                    } else {
-                        alert('JavaScript文件尚未加载完成，请稍后重试');
-                    }
-                });
+            for (let i = 0; i < 50; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                const size = Math.random() * 8 + 4;
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                particle.style.left = `${Math.random() * 100}vw`;
+                particle.style.top = `${Math.random() * 100 + 100}vh`;
+                
+                // 随机颜色
+                const colors = ['#667eea', '#764ba2', '#f093fb', '#f5576c', '#4facfe', '#00f2fe'];
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                particle.style.backgroundColor = color;
+                
+                // 随机动画延迟和持续时间
+                particle.style.animationDelay = `${Math.random() * 20}s`;
+                particle.style.animationDuration = `${Math.random() * 10 + 15}s`;
+                particle.style.opacity = Math.random() * 0.3 + 0.1;
+                
+                container.appendChild(particle);
             }
+        }
+        
+        // 初始化成就滚动
+        function initAchievements() {
+            const achievements = [
+                { icon: 'fa-fire', text: '小明连续学习了15天' },
+                { icon: 'fa-trophy', text: '小红获得了"月之星"徽章' },
+                { icon: 'fa-chart-line', text: '班级今日打卡率92%' },
+                { icon: 'fa-star', text: '小刚累计掌握500个单词' },
+                { icon: 'fa-brain', text: '小李记忆效率提升40%' },
+                { icon: 'fa-users', text: '本月新增30位学员' },
+                { icon: 'fa-award', text: '王老师获得金牌讲师称号' },
+                { icon: 'fa-graduation-cap', text: '20位学员完成阶段目标' }
+            ];
             
-            if (testBtn) {
-                testBtn.addEventListener('click', function() {
-                    console.log('测试按钮点击');
-                    if (typeof testDatabase === 'function') {
-                        testDatabase();
-                    } else {
-                        alert('JavaScript文件尚未加载完成，请稍后重试');
-                    }
-                });
+            const track = document.getElementById('achievementTrack');
+            track.innerHTML = '';
+            
+            // 复制成就项以创建无缝滚动效果
+            achievements.forEach(achievement => {
+                const item = document.createElement('div');
+                item.className = 'achievement-item';
+                item.innerHTML = `
+                    <i class="fas ${achievement.icon}"></i>
+                    <span>${achievement.text}</span>
+                `;
+                track.appendChild(item.cloneNode(true));
+                track.appendChild(item.cloneNode(true));
+            });
+        }
+        
+        // 输入框事件处理
+        document.getElementById('loginInput').addEventListener('input', function(e) {
+            const value = e.target.value.trim();
+            const loginBtn = document.getElementById('loginBtn');
+            const roleSelector = document.getElementById('roleSelector');
+            const roleHint = document.getElementById('roleHint');
+            
+            // 更新按钮状态
+            loginBtn.disabled = value.length === 0;
+            
+            // 显示/隐藏角色选择
+            if (value.length > 0) {
+                roleSelector.style.display = 'block';
+                roleHint.style.display = 'flex';
+                
+                // 根据输入内容智能推荐角色
+                recommendRole(value);
+            } else {
+                roleSelector.style.display = 'none';
+                roleHint.style.display = 'none';
+                resetRoleButtons();
             }
+        });
+        
+        // 回车键登录
+        document.getElementById('loginInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !document.getElementById('loginBtn').disabled) {
+                handleLogin();
+            }
+        });
+        
+        // 智能推荐角色
+        function recommendRole(input) {
+            resetRoleButtons();
             
-            // 检查JS文件是否已加载
+            if (input === 'kathy151') {
+                highlightRoleButton('teacher');
+            } else if (input.startsWith('parent_')) {
+                highlightRoleButton('parent');
+            } else {
+                highlightRoleButton('student');
+            }
+        }
+        
+        // 高亮角色按钮
+        function highlightRoleButton(role) {
+            const button = document.querySelector(`.role-btn[data-role="${role}"]`);
+            if (button) {
+                button.classList.add('active');
+            }
+        }
+        
+        // 重置角色按钮
+        function resetRoleButtons() {
+            document.querySelectorAll('.role-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+        }
+        
+        // 选择角色
+        function selectRole(role) {
+            // 添加选中效果
+            resetRoleButtons();
+            highlightRoleButton(role);
+            
+            // 保存选择
+            sessionStorage.setItem('selectedRole', role);
+        }
+        
+        // 填充输入框（用于测试账号）
+        function fillInput(value) {
+            const input = document.getElementById('loginInput');
+            input.value = value;
+            input.focus();
+            
+            // 触发输入事件
+            const event = new Event('input', { bubbles: true });
+            input.dispatchEvent(event);
+        }
+        
+        // 处理登录
+        async function handleLogin() {
+            const input = document.getElementById('loginInput').value.trim();
+            if (!input) return;
+            
+            // 添加加载效果
+            const loginBtn = document.getElementById('loginBtn');
+            const originalHTML = loginBtn.innerHTML;
+            loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 登录中...';
+            loginBtn.disabled = true;
+            loginBtn.classList.remove('pulse');
+            
+            // 卡片动画
+            const loginCard = document.getElementById('loginCard');
+            loginCard.style.opacity = '0.8';
+            loginCard.style.transform = 'scale(0.98)';
+            
+            // 延迟执行以显示加载效果
             setTimeout(() => {
-                if (typeof handleLogin === 'function' && typeof testDatabase === 'function') {
-                    console.log('JavaScript函数已加载');
-                    document.getElementById('loading-message').textContent = '系统初始化完成';
-                    document.getElementById('global-loading').style.display = 'none';
-                } else {
-                    console.log('等待JavaScript加载...');
-                    document.getElementById('loading-message').textContent = '正在加载JavaScript文件...';
-                    
-                    // 如果10秒后还没加载，提示用户
-                    setTimeout(() => {
-                        if (typeof handleLogin !== 'function') {
-                            document.getElementById('loading-message').textContent = '加载超时，请刷新页面';
-                            document.getElementById('loading-details').textContent = '如果问题持续，请检查网络连接';
-                        }
-                    }, 10000);
+                let selectedRole = sessionStorage.getItem('selectedRole');
+                
+                // 如果没有选择角色，智能判断
+                if (!selectedRole) {
+                    if (input === 'kathy151') {
+                        selectedRole = 'teacher';
+                    } else if (input.startsWith('parent_')) {
+                        selectedRole = 'parent';
+                    } else {
+                        selectedRole = 'student';
+                    }
                 }
-            }, 2000);
+                
+                // 保存用户信息
+                localStorage.setItem('userRole', selectedRole);
+                localStorage.setItem('userName', input);
+                
+                // 根据角色跳转
+                switch(selectedRole) {
+                    case 'teacher':
+                        // 添加跳转动画
+                        loginCard.style.animation = 'fadeOut 0.3s ease forwards';
+                        setTimeout(() => {
+                            window.location.href = 'teacher.html';
+                        }, 300);
+                        break;
+                    case 'parent':
+                        loginCard.style.animation = 'fadeOut 0.3s ease forwards';
+                        setTimeout(() => {
+                            window.location.href = 'parent.html';
+                        }, 300);
+                        break;
+                    case 'student':
+                        loginCard.style.animation = 'fadeOut 0.3s ease forwards';
+                        setTimeout(() => {
+                            window.location.href = 'student.html';
+                        }, 300);
+                        break;
+                }
+            }, 600);
+        }
+        
+        // 检查是否已登录
+        function checkLoginStatus() {
+            const savedRole = localStorage.getItem('userRole');
+            const savedName = localStorage.getItem('userName');
+            
+            if (savedRole && savedName) {
+                // 显示快速登录提示
+                const quickLogin = confirm(`检测到上次登录身份：${savedName} (${savedRole})\n\n是否直接进入系统？`);
+                
+                if (quickLogin) {
+                    // 添加跳转动画
+                    const loginCard = document.getElementById('loginCard');
+                    loginCard.style.animation = 'fadeOut 0.3s ease forwards';
+                    
+                    setTimeout(() => {
+                        switch(savedRole) {
+                            case 'teacher':
+                                window.location.href = 'teacher.html';
+                                break;
+                            case 'parent':
+                                window.location.href = 'parent.html';
+                                break;
+                            case 'student':
+                                window.location.href = 'student.html';
+                                break;
+                        }
+                    }, 300);
+                } else {
+                    // 清除本地存储
+                    localStorage.removeItem('userRole');
+                    localStorage.removeItem('userName');
+                }
+            }
+        }
+        
+        // 页面加载完成
+        document.addEventListener('DOMContentLoaded', function() {
+            initParticles();
+            initAchievements();
+            checkLoginStatus();
+            
+            // 自动聚焦输入框
+            setTimeout(() => {
+                const input = document.getElementById('loginInput');
+                input.focus();
+            }, 500);
+            
+            // 添加CSS动画
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes fadeOut {
+                    from { opacity: 1; transform: translateY(0); }
+                    to { opacity: 0; transform: translateY(20px); }
+                }
+            `;
+            document.head.appendChild(style);
         });
         
-        // 页面错误处理
-        window.onerror = function(msg, url, lineNo, columnNo, error) {
-            console.error('页面错误:', msg, '在', url, lineNo);
-            alert('系统出现错误: ' + msg + '\n请刷新页面重试');
-            return false;
-        };
-        
-        // 网络状态监控
-        window.addEventListener('online', function() {
-            console.log('网络已连接');
-            showAlert('网络已恢复连接', 'success');
-        });
-        
-        window.addEventListener('offline', function() {
-            console.log('网络断开');
-            showAlert('网络连接已断开，部分功能可能受限', 'warning');
-        });
+        // 窗口大小变化时重新初始化粒子
+        window.addEventListener('resize', initParticles);
     </script>
-    
-    <!-- 引入主JavaScript文件 -->
-    <script src="script.js"></script>
 </body>
 </html>
